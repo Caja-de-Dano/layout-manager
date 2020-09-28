@@ -9,13 +9,13 @@ using System.Windows.Forms;
 
 namespace LayoutDesigner
 {
-    class BoxButton : Button
+    public class BoxButton : Button
     {
         public int AssignedValue;
         public string NormalCommand; // the main functionality for the button
         public string AltCommand = ""; // the not mandatory alt commands that would be triggered when holding the MOD button
 
-        private void default_button_layout()
+        private void DefaultButtonLayout()
         {
             this.FlatStyle = 0; //0-flat,1-popup,2-standard,3-system
             this.FlatAppearance.BorderSize = 0;
@@ -24,13 +24,13 @@ namespace LayoutDesigner
         }
         public BoxButton()
         {
-            default_button_layout();
+            DefaultButtonLayout();
             this.AssignedValue = -1;
         }
-        public BoxButton(String text, Point location, int assigned_value)
+        public BoxButton(String text, Point location, int assignedValue)
         {
-            default_button_layout();
-            this.AssignedValue = assigned_value;
+            DefaultButtonLayout();
+            this.AssignedValue = assignedValue;
             this.Text = text;
             this.Location = location;
             // XXX: unknown why we do this other than the note that was left before..

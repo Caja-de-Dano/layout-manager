@@ -15,59 +15,60 @@ using System.Text.RegularExpressions;
 //using System.Threading;
 //using System.Threading.Tasks;
 using System.Windows.Forms;
-
 namespace LayoutDesigner
 {
 
     public partial class Form1 : Form
     {
-        private BoxButton selected_button;
-        private static List<BoxButton> current_buttons = new List<BoxButton>();
-        private const int num_buttons = 23;
-        private String[] button_names = new string[num_buttons] {"BR1", "BR2", "TR1", "TR2", "TB", "BR3", "TR3", "BR4", "TR4", "DL", "DR", "DU", "DD", "LSL", "LSR", "LSU", "LSD", "RSL", "RSR", "RSU", "RSD", "TILT1", "TILT2"};
         // these are the default config that I personally use so there might be a need to change this up
-        private String[] og_button_values = new string[num_buttons] { "A", "B", "X", "Y", "START", "L", "R", "ZL", "ZR", "L100", "R100", "U100", "D100", "HATL", "HATR", "HATU", "HATD", "CSL", "CSR", "CSU", "CSD", "HALF", "MIRROR" };
-        private String[] button_values = new string[num_buttons] { "A", "B", "X", "Y", "START", "L", "R", "ZL", "ZR", "L100", "R100", "U100", "D100", "HATL", "HATR", "HATU", "HATD", "CSL", "CSR", "CSU", "CSD", "HALF", "MIRROR" };
-        //-400 from x
-        // -100 from y
-        private Point[] button_locs = new Point[num_buttons] {
-            new Point(565, 250), new Point(665, 218), new Point(586, 143), new Point(687, 102), new Point(450, 10),
-            new Point(775, 238), new Point(792, 120), new Point(874, 278), new Point(900, 166), //hasnt been changed knowing that we subtracted 200 from the below line
-            new Point(120, 179), new Point(318, 235), new Point(245, 108), new Point(220, 207), // subtracting 100 from x (this is the directional buttons)
-            new Point(353, 539), new Point(415, 435), new Point(309, 435), new Point(458, 539),
-            new Point(597, 539), new Point(746, 435), new Point(640, 435), new Point(703, 539),
-            new Point(33, 263), new Point(652, 639)
-        };
-        private IDictionary lookup_table = new Dictionary<string, string>();
-        private bool waiting_for_press = false;
-        private bool right_clicked_menu = false;
+        private CodeGenerator masterGenerator = new CodeGenerator();
+        private CodeGenerator currentGenerator;
+        private bool waitingForPress = false;
+        private bool rightClickedMenu = false;
         private bool can_run_background = true;
 
         private const int WM_DEVICECHANGE = 0x219;
         private const int DBT_DEVICEARRIVAL = 0x8000;
         private const int DBT_DEVICEREMOVECOMPLETE = 0x8004;
         private const int DBT_DEVTYP_VOLUME = 0x00000002;
+        private List<CodeGenerator> profileGenerators = new List<CodeGenerator>();
 
-        // nothing here
-        private void get_usb_devices()
+        // BOX Descriptions
+        // DOUBLE STICK BOX LATEST
+        // DEVICE ID: HID\VID_0F0D&PID_0092\6&17DE8C14&0&0000
+        // HAWK BOX
+        // DEVICE ID: HID\VID_0F0D&PID_0092\6&22F43165&2&0000
+        // NEW NEW BOX
+        // DEVICE ID: HID\VID_0F0D&PID_0092\6&22F43165&2&0000
+        private void getUsbDevices()
         {
             bool found = false;
             ManagementObjectCollection collection;
             using (var searcher = new ManagementObjectSearcher(@"Select * From Win32_PnPEntity"))
                 collection = searcher.Get();
+            ManagementClass processClass = new ManagementClass("Win32_Process");
 
             foreach (var device in collection)
             {
                 string description = (string)device.GetPropertyValue("Description");
-                string device_id = (string)device.GetPropertyValue("DeviceID");
-                if (description == "HID-compliant game controller" && device_id.Contains("HID\\VID"))
+                string deviceId = (string)device.GetPropertyValue("DeviceID");
+                if (description == "HID-compliant game controller" && deviceId.Contains("HID\\VID"))
                 {
+                    Console.WriteLine("DEVICE ID: " + (string)device.GetPropertyValue("DeviceID"));
+                    Console.WriteLine("PNPDeviceID: " + (string)device.GetPropertyValue("PNPDeviceID"));
+                    Console.WriteLine("Manufacturer: " + (string)device.GetPropertyValue("Manufacturer"));
+
                     found = true;
-                    backgroundWorker1.ReportProgress(2);
+                    if (deviceId.Contains("17DE8C1"))
+                    {
+                        backgroundWorker1.ReportProgress(3);
+                    }
+                    else
+                    {
+                        backgroundWorker1.ReportProgress(2);
+                    }
+
                 }
-                Console.WriteLine("DEVICE ID: " + (string)device.GetPropertyValue("DeviceID"));
-                Console.WriteLine("PNPDeviceID: " + (string)device.GetPropertyValue("PNPDeviceID"));
-                Console.WriteLine("Description: " + (string)device.GetPropertyValue("Description"));
             }
             collection.Dispose();
             if (found == false)
@@ -107,119 +108,220 @@ namespace LayoutDesigner
             }
         }
 
-        private void remove_buttons()
-        {
-            while(current_buttons.Count > 0)
-            {
-                BoxButton a = current_buttons[0];
-                current_buttons.RemoveAt(0);
-                tabPage1.Controls.Remove(a);
-            }
-        }
-        private void build_default_buttons()
-        {
-            remove_buttons();
-            for (var i = 0; i < num_buttons; i++)
-            {
-                BoxButton temp = new BoxButton(button_values[i], button_locs[i], i);
-                temp.MouseDown += new MouseEventHandler(this.boxaddProfileButton_MouseDown);
-
-                tabPage1.Controls.Add(temp);
-                current_buttons.Add(temp);
-            }
-        }
-
         public Form1()
         {
             InitializeComponent();
-            get_usb_devices();
-            build_default_buttons();
-            lookup_table.Add("X", "ReportData->Button |= SWITCH_X;");
-            lookup_table.Add("Y", "ReportData->Button |= SWITCH_Y;");
-            lookup_table.Add("R", "ReportData->Button |= SWITCH_R;");
-            lookup_table.Add("L", "ReportData->Button |= SWITCH_L;");
-            lookup_table.Add("ZR", "ReportData->Button |= SWITCH_ZR;");
-            lookup_table.Add("ZL", "ReportData->Button |= SWITCH_ZL;");
-            lookup_table.Add("A", "ReportData->Button |= SWITCH_A;");
-            lookup_table.Add("B", "ReportData->Button |= SWITCH_B;");
-            lookup_table.Add("START", "ReportData->Button |= SWITCH_PLUS;");
-            lookup_table.Add("MINUS", "ReportData->Button |= SWITCH_MINUS;");
-            lookup_table.Add("CSR", "ReportData->RX = 255;ReportData->RY = 128;");
-            lookup_table.Add("CSL", "ReportData->RX = 0;ReportData->RY = 128;");
-            lookup_table.Add("CSU", "ReportData->RX = 128;ReportData->RY = 0;");
-            lookup_table.Add("CSD", "ReportData->RX = 128;ReportData->RY = 255;");
-            lookup_table.Add("R100", "ReportData->LX = 255;ReportData->LY = 128;direction_pressed = true;");
-            lookup_table.Add("L100", "ReportData->LX = 0;ReportData->LY = 128;direction_pressed = true;");
-            lookup_table.Add("SODC_L100", "if(direction_pressed) { ReportData->LX = 128; ReportData->LY = 128; } else { ReportData->LX = 0;ReportData->LY = 128;direction_pressed = true;}");
-            lookup_table.Add("U100", "if(direction_pressed){ReportData->LY = 0;}else{ReportData->LX = 128;ReportData->LY = 0;}");
-            lookup_table.Add("D100", "if(direction_pressed){ReportData->LY = 255;}else{ReportData->LX = 128;ReportData->LY = 255;}");
-            lookup_table.Add("MIRROR", "if(direction_pressed) {if(ReportData->LX == 0) {ReportData->LX = 255;} else {ReportData->LX = 0;}} else {mirror_pressed = true;}");
-            lookup_table.Add("HALF", "if(direction_pressed) {if(ReportData->LX == 0) {ReportData->LX = 60;} else {ReportData->LX = 196;}}if(ReportData->LY == 255) {ReportData->LY = 192;} else if(ReportData->LY == 0) {ReportData->LY = 60;}");
-            lookup_table.Add("HATU", "ReportData->HAT = HAT_TOP;");
-            lookup_table.Add("HATD", "ReportData->HAT = HAT_BOTTOM;");
-            lookup_table.Add("HATL", "ReportData->HAT = HAT_LEFT;");
-            lookup_table.Add("HATR", "ReportData->HAT = HAT_RIGHT;");
+            radioButton1.Select();
+            getUsbDevices();
+            currentGenerator = masterGenerator;
+            masterGenerator.CreateButtons(this.boxButtonMouseDownHandler, tabPage1);
+            masterGenerator.commandTextbox = textBox1;
+            profileGenerators.Add(masterGenerator);
+            profileComboBox.SelectedIndex = 0;
+            this.Icon = Properties.Resources.gunstock_icon;
+            this.Text = "Caja de Dano Layout Manager";
         }
 
-        private void generate_config()
+        private void generateConfig()
         {
-            textBox1.Text = "";
-            for(var i=0;i<num_buttons;i++)
+            currentGenerator.MakeConfig();
+        }
+
+        private string generateCode()
+        {
+            string originalTempalte = File.ReadAllText("template.c");
+            if(profileGenerators.Count == 1)
             {
-                if(current_buttons[i].AltCommand != "")
+                foreach(string line in profileGenerators[0].ExportConfig().Split(Environment.NewLine.ToCharArray()))
                 {
-                    textBox1.Text += button_names[i] + ", " + button_values[i] + "|" + current_buttons[i].AltCommand + Environment.NewLine;
-                } else
-                {
-                    textBox1.Text += button_names[i] + ", " + button_values[i] + Environment.NewLine;
+                    if(line.Contains(","))
+                    {
+                        Console.WriteLine("LINE:" + line);
+                        string[] buttonCommand = line.Split(',');
+                        string button = "//" + buttonCommand[0];
+                        string command = Regex.Replace(buttonCommand[1], @"\s+", "");
+
+                        Console.WriteLine("BUTTON COMMAND: " + button);
+                        Console.WriteLine("BUTTON CCCCOMMAND: " + command);
+                        string altCommand = "";
+                        string replaceCodeString = "";//will be filled out depending if the command contains an alt / just a norm
+                        if (command.Contains('|'))
+                        {
+                            string[] commands = command.Split('|');
+                            string doubleCommand = "if(mirror_pressed) { //ALT } else { //NORM }";
+                            command = commands[0];
+                            altCommand = commands[1];
+                            doubleCommand = doubleCommand.Replace("//ALT", currentGenerator.FetchCommand(altCommand));
+                            doubleCommand = doubleCommand.Replace("//NORM", currentGenerator.FetchCommand(command));
+                            Console.WriteLine("alt command is present");
+                            Console.WriteLine(doubleCommand);
+                            replaceCodeString = doubleCommand;
+                        }
+                        else
+                        {
+                            // TODO: actually check for SODC radio here
+                            if(command == "L100")
+                            {
+                                replaceCodeString = currentGenerator.FetchCommand("SODC_L100");
+                            }
+                            else
+                            {
+                                replaceCodeString = currentGenerator.FetchCommand(command);
+                            }
+                        }
+                        // COMO: need to work out the way we'd replace the code for a multiple command in this section
+                        if (currentGenerator.ValidKey(command))
+                        {
+                            originalTempalte = originalTempalte.Replace(button, replaceCodeString);
+                        }
+                        else
+                        {
+                            Console.WriteLine("skipping " + command);
+                        }
+
+                    }
                 }
+                originalTempalte.Replace("//STARTUP", "ReportData->Button |= SWITCH_L | SWITCH_R;");
+                File.WriteAllText("Joystick.c", originalTempalte);
+                return originalTempalte;
+            } else
+            {
+                List<string> rawCommandList = new List<string>();
+
+                List<string> commandList = new List<string>();
+                List<string> buttonList = new List<string>();
+                foreach (CodeGenerator cg in profileGenerators)
+                {
+                    foreach (string line in cg.ExportConfig().Split(Environment.NewLine.ToCharArray()))
+                    {
+                        if (line.Contains(","))
+                        {
+                            string[] buttonCommand = line.Split(',');
+                            string button = "//" + buttonCommand[0];
+                            string command = Regex.Replace(buttonCommand[1], @"\s+", "");
+
+                            Console.WriteLine("bb COMMAND: " + button);
+                            Console.WriteLine("bb CCCCOMMAND: " + command);
+                            string altCommand = "";
+                            string replaceCodeString = "";//will be filled out depending if the command contains an alt / just a norm
+                            if (command.Contains('|'))
+                            {
+                                string[] commands = command.Split('|');
+                                string doubleCommand = "if(mirror_pressed) { //ALT } else { //NORM }";
+                                command = commands[0];
+                                altCommand = commands[1];
+                                doubleCommand = doubleCommand.Replace("//ALT", currentGenerator.FetchCommand(altCommand));
+                                doubleCommand = doubleCommand.Replace("//NORM", currentGenerator.FetchCommand(command));
+                                Console.WriteLine("alt command is present");
+                                Console.WriteLine(doubleCommand);
+                                replaceCodeString = doubleCommand;
+                            }
+                            else
+                            {
+                                replaceCodeString = currentGenerator.FetchCommand(command);
+                            }
+
+
+                            if(buttonList.Contains(button))
+                            {
+                                Console.WriteLine("ALREADY IN THERE");
+                                int a = buttonList.IndexOf(button);
+                                string og = rawCommandList[a];
+                                rawCommandList[a] = og + "$$$" + replaceCodeString;
+                            }
+                            else
+                            {
+                                Console.WriteLine("ADDING IN FRESH: " + button);
+                                commandList.Add(command);
+                                buttonList.Add(button);
+                                rawCommandList.Add(replaceCodeString);
+                            }
+
+                        }
+                    }
+                    Console.WriteLine("PROFILE PROCESSING");
+                }
+                int counter = 0;
+                foreach(string b in buttonList)
+                {
+                    Console.WriteLine("BIG thing:" + b);
+                    string key_check = b.Substring(2);
+                    string s = commandList[counter];
+
+
+                    // want to do the replacing right here
+                    if (currentGenerator.ValidKey(s))
+                    {
+                        Console.WriteLine("VALID KEY");
+                        string button = "//" + s;
+                        string combined_command = rawCommandList[counter];
+                        string[] command_combo = Regex.Split(combined_command, @"\$\$\$");
+
+                        string replacement_string = "if(profile_a_active){ " + command_combo[1] + "} else {" + command_combo[0] + "}";
+                        originalTempalte = originalTempalte.Replace(b, replacement_string);
+                    }
+                    else
+                    {
+                        Console.WriteLine("skipping " + s);
+                    }
+                    counter += 1;
+
+                }
+                foreach (string a in rawCommandList)
+                {
+                    Console.WriteLine("LINE: " + a);
+                }
+                // TODO: we should handle for different cases of profile counts but for now lets just do for 2 profiles
+                originalTempalte = originalTempalte.Replace("//STARTUP", "if (buf_button & (1<<0)) { profile_a_active = true; } else { ReportData->Button |= SWITCH_L | SWITCH_R; state=USING; }");
+
             }
+            return originalTempalte;
         }
         // TODO: move to a class start
 
         // XXX: this will break with the multiple commands on the button
         private string generate_joystick()
         {
-            string og_template = File.ReadAllText("template.c");
+            string originalTempalte = File.ReadAllText("template.c");
             foreach (string line in File.ReadLines("config.dbox"))
             {
-                string[] button_command = line.Split(',');
-                string button = "//"+button_command[0];
-                string command = Regex.Replace(button_command[1], @"\s+", "");
-                string alt_command = "";
-                string replace_code_string = "";//will be filled out depending if the command contains an alt / just a norm
+                string[] buttonCommand = line.Split(',');
+                string button = "//"+buttonCommand[0];
+                string command = Regex.Replace(buttonCommand[1], @"\s+", "");
+                string altCommand = "";
+                string replaceCodeString = "";//will be filled out depending if the command contains an alt / just a norm
                 if(command.Contains('|'))
                 {
                     string[] commands = command.Split('|');
-                    string double_command = "if(mirror_pressed) { //ALT } else { //NORM }";
+                    string doubleCommand = "if(mirror_pressed) { //ALT } else { //NORM }";
                     command = commands[0];
-                    alt_command = commands[1];
-                    double_command = double_command.Replace("//ALT", lookup_table[alt_command] as string);
-                    double_command = double_command.Replace("//NORM", lookup_table[command] as string);
+                    altCommand = commands[1];
+                    doubleCommand = doubleCommand.Replace("//ALT", currentGenerator.FetchCommand(altCommand));
+                    doubleCommand = doubleCommand.Replace("//NORM", currentGenerator.FetchCommand(command));
                     Console.WriteLine("alt command is present");
-                    Console.WriteLine(double_command);
-                    replace_code_string = double_command;
+                    Console.WriteLine(doubleCommand);
+                    replaceCodeString = doubleCommand;
                 } else
                 {
-                    replace_code_string = lookup_table[command] as string;
+                    replaceCodeString = currentGenerator.FetchCommand(command);
                 }
                 // COMO: need to work out the way we'd replace the code for a multiple command in this section
-                if (lookup_table.Contains(command))
+                if (currentGenerator.ValidKey(command))
                 {
-                    og_template = og_template.Replace(button, replace_code_string);
+                    originalTempalte = originalTempalte.Replace(button, replaceCodeString);
                 } else
                 {
                     Console.WriteLine("skipping "+command);
                 }
             }
-            File.WriteAllText("Joystick.c", og_template);
-            return og_template;
+            File.WriteAllText("Joystick.c", originalTempalte);
+            return originalTempalte;
         }
         // TODO: END ABOVE
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            this.generate_config();
+            this.generateConfig();
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -232,50 +334,24 @@ namespace LayoutDesigner
 
         }
 
-        // create a new tab
-        private void addProfileButton_Click(object sender, EventArgs e)
-        {
-            TabPage tpOld = tabControl1.SelectedTab;
-
-            TabPage tpNew = new TabPage();
-            tpNew.Text = "Profile 2";
-            foreach (Control c in tpOld.Controls)
-            {
-                Control cNew = (Control)Activator.CreateInstance(c.GetType());
-
-                PropertyDescriptorCollection pdc = TypeDescriptor.GetProperties(c);
-
-                foreach (PropertyDescriptor entry in pdc)
-                {
-                    object val = entry.GetValue(c);
-                    entry.SetValue(cNew, val);
-                }
-
-                // add control to new TabPage
-                tpNew.Controls.Add(cNew);
-            }
-
-            tabControl1.TabPages.Add(tpNew);
-        }
-
         private void tabPage1_Click(object sender, EventArgs e)
         {
 
         }
 
         // Button click handler for BoxButton
-        private void boxaddProfileButton_MouseDown(object sender, MouseEventArgs e)
+        private void boxButtonMouseDownHandler(object sender, MouseEventArgs e)
         {
-            selected_button = sender as BoxButton;
+            currentGenerator.SetSelectedButton(sender);
             // Bold the currently selected option from the dropdown menu
             // XXX: kinda ghetto solve to bold the current selection in the menu
             // not sure of a better way to take care of it but for now its working and could be moved into a function
             for (var i = 0; i < buttonSwapMenu.Items.Count; i++)
             {
-                if (buttonSwapMenu.Items[i].Text == selected_button.NormalCommand || buttonSwapMenu.Items[i].Text == selected_button.AltCommand)
+                if (currentGenerator.CheckTextMatch(buttonSwapMenu.Items[i].Text))
                 {
                     ToolStripItem a = buttonSwapMenu.Items[i];
-                    a.Font = new Font(a.Font, a.Font.Style | FontStyle.Bold); 
+                    a.Font = new Font(a.Font, a.Font.Style | FontStyle.Bold);
                 }
                 else
                 {
@@ -286,15 +362,15 @@ namespace LayoutDesigner
 
             if (e.Button == MouseButtons.Left)
             {
-                right_clicked_menu = false;
+                rightClickedMenu = false;
                 buttonSwapMenu.Show(Cursor.Position);
                 // experimental drawing stuff here
-                selected_button.BackColor = SystemColors.ButtonHighlight;
+                currentGenerator.ChangeButtonColor(SystemColors.ButtonHighlight);
             }
             if (e.Button == MouseButtons.Right)
             {
                 //do something
-                right_clicked_menu = true;
+                rightClickedMenu = true;
                 buttonSwapMenu.Show(Cursor.Position);
             }
         }
@@ -302,63 +378,56 @@ namespace LayoutDesigner
         private void buttonSwapMenu_Closing(object sender, CancelEventArgs e)
         {
             // experimental reset the button
-            selected_button.BackColor = SystemColors.ControlDark;
+            currentGenerator.ChangeButtonColor(SystemColors.ControlDark);
         }
 
         private void buttonSwapMenu_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
-            string new_text = e.ClickedItem.Text;
-            if(new_text == "Remove Alt Button")
+            string newText = e.ClickedItem.Text;
+            if(newText == "Remove Alt Button")
             {
-                selected_button.AltCommand = "";
-                set_text_for_button();
-                this.generate_config();
+                currentGenerator.SetAltCommand("");
+                currentGenerator.SetButtonText();
+                this.generateConfig();
             } else
             {
-                if (right_clicked_menu)
+                if (rightClickedMenu)
                 {
-                    selected_button.AltCommand = new_text;
-                    set_text_for_button();
-                    this.generate_config();
-                    // TODO: not setting the button value because it will break the generate_config function
+                    currentGenerator.SetAltCommand(newText);
+                    currentGenerator.SetButtonText();
+                    this.generateConfig();
+                    // TODO: not setting the button value because it will break the generateConfig function
                     // TODO: want to add additional information
                     // TODO: need to regenerate the config here
                 }
                 else
                 {
-                    selected_button.NormalCommand = new_text;
+                    currentGenerator.SetNormCommand(newText);
                     // want to find what the text was before selection
-                    button_values[selected_button.AssignedValue] = new_text;
-                    //selected_button.Text = new_text;
-                    set_text_for_button();
-                    this.generate_config();
+                    currentGenerator.SetButtonValue(newText);
+                    currentGenerator.SetButtonText();
+                    this.generateConfig();
                 }
-            }
-        }
-        private void set_text_for_button()
-        {
-            selected_button.Text = selected_button.NormalCommand;
-            if(selected_button.AltCommand != "")
-            {
-                selected_button.Text += " | " + selected_button.AltCommand;
             }
         }
 
         private void resetToDefaultButton_Click(object sender, EventArgs e)
         {
-            build_default_buttons();
+            currentGenerator.CreateButtons(this.boxButtonMouseDownHandler, tabPage1);
         }
 
         private void generateAndLoadButton_Click(object sender, EventArgs e)
         {
-            File.WriteAllText("config.dbox", textBox1.Text);
-            string joystick_c = generate_joystick();
-            // Create a 'WebRequest' object with the specified url. 
-            string data = joystick_c;
+            // OLD WAY
+            //File.WriteAllText("config.dbox", textBox1.Text);
+            //string joystickCode = generate_joystick();
+            string joystickCode = generateCode();
+
+            // Create a 'WebRequest' object with the specified url.
+            string data = joystickCode;
             byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-            //WebRequest request = WebRequest.Create("http://localhost:4567/make-it");
-            WebRequest request = WebRequest.Create("http://143.110.136.163/make-it");
-            
+            WebRequest request = WebRequest.Create(Environment.GetEnvironmentVariable("WEB_HOST") + "/make-it");
+
             //request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             request.ContentLength = dataBytes.Length;
             request.ContentType = "application/json";
@@ -372,14 +441,14 @@ namespace LayoutDesigner
             }
             WebResponse myWebResponse = request.GetResponse();
             Stream stream = myWebResponse.GetResponseStream();
-            string response_text = "";
+            string responseText = "";
             using (StreamReader reader = new StreamReader(stream))
             {
-                response_text = reader.ReadToEnd();
+                responseText = reader.ReadToEnd();
             }
-            //Console.WriteLine(response_text);
+            //Console.WriteLine(responseText);
             myWebResponse.Close();
-            File.WriteAllText("Joystick.hex", response_text);
+            File.WriteAllText("Joystick.hex", responseText);
 
             try
             {
@@ -391,14 +460,14 @@ namespace LayoutDesigner
                     ps.StartInfo.UseShellExecute = false;
                     ps.StartInfo.CreateNoWindow = true;
                     ps.StartInfo.RedirectStandardOutput = true;
-                    ps.OutputDataReceived += (s, args) => 
+                    ps.OutputDataReceived += (s, args) =>
                     {
                         if(!String.IsNullOrEmpty(args.Data))
                         {
                             if (args.Data != null && args.Data.Contains("Waiting for Teensy device"))
                             {
                                 Console.WriteLine("FOUND");
-                                waiting_for_press = true;
+                                waitingForPress = true;
                                 generateAndLoadButton.BeginInvoke(new MethodInvoker(() => {
                                     label1.Text = "Open and Press Button Inside";
                                     label1.ForeColor = System.Drawing.Color.Red;
@@ -429,14 +498,16 @@ namespace LayoutDesigner
 
         private void exportLayoutButton_Click(object sender, EventArgs e)
         {
-            string joystick_c = generate_joystick();
-            FlexibleMessageBox.Show(joystick_c);
+            //string joystickCode = generate_joystick();
+            string joystickCode = generateCode();
+
+            FlexibleMessageBox.Show(joystickCode);
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             Console.WriteLine("DO WORK");
-            get_usb_devices();
+            getUsbDevices();
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -451,12 +522,115 @@ namespace LayoutDesigner
                     label1.Text = "Device Detected (Caja Grande)";
                     label1.ForeColor = System.Drawing.Color.Green;
                     break;
+                case (3):
+                    label1.Text = "Device Detected (Palanaca 2)";
+                    label1.ForeColor = System.Drawing.Color.Green;
+                    break;
             }
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Save the config to an exportable file.. open the file dialog to save somewhere on disk");
+            var dialog = new SaveFileDialog();
+            dialog.Filter = "Caja Config (*.caja)|*.caja";
+            dialog.FilterIndex = 1;
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(textBox1.Text);
+                FileStream fs = new FileStream(dialog.FileName, FileMode.OpenOrCreate, FileAccess.Write);
+                fs.Write(bytes, 0, bytes.Length);
+                fs.Close();
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            var dialog = new OpenFileDialog();
+            dialog.Filter = "Caja Config (*.caja)|*.caja";
+            dialog.FilterIndex = 1;
+            if(dialog.ShowDialog() == DialogResult.OK)
+            {
+                textBox1.Text = "";
+                //Read the contents of the file into a stream
+                var fileStream = dialog.OpenFile();
+                var fileContent = string.Empty;
+
+                using (StreamReader reader = new StreamReader(fileStream))
+                {
+                    string s = string.Empty;
+                    while((s = reader.ReadLine()) != null) {
+                        // still need to split
+                        textBox1.Text += s + System.Environment.NewLine;
+                        string[] commands = s.Trim().Split(',');
+                        string a = commands[0];
+                        string b = commands[1].Trim();
+                        Console.WriteLine("command a:" + a + " command b: " + b);
+                        currentGenerator.SetButtonFromConfig(a, b);
+                    }
+                }
+                //this.generateConfig();
+            }
+        }
+
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            TabControl t = (TabControl)sender;
+            Console.WriteLine("SELECTED: " + t.SelectedIndex);
+            currentGenerator = profileGenerators[t.SelectedIndex];
+        }
+
+        private void tabControl1_TabIndexChanged(object sender, EventArgs e)
+        {
+            Console.WriteLine("TAB INDEX CHANGED");
+        }
+
+        private void tabControl1_MouseClick(object sender, MouseEventArgs e)
+        {
+            Console.WriteLine("TABCONTROL MOUSE CLICK");
+
+        }
+
+        private void tabControl1_Selected(object sender, TabControlEventArgs e)
+        {
+            Console.WriteLine("TABCONTROL SELECTED");
+        }
+
+        private void tabControl1_Selecting(object sender, TabControlCancelEventArgs e)
+        {
+            Console.WriteLine("TABCONTROL SELECTING");
+        }
+
+        private void profileComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ComboBox a = (ComboBox)sender;
+            if(a.SelectedItem.ToString() == "Add Profile")
+            {
+                a.Items.Insert(a.Items.Count - 1, "Profile "+ a.Items.Count);
+                Console.WriteLine("SHOULD ADD A PROFILE");
+                CodeGenerator t = new CodeGenerator();
+                t.commandTextbox = textBox1;
+                profileGenerators.Add(t);
+                Console.WriteLine("PROFILE: " + profileGenerators.Count);
+                a.SelectedIndex = a.Items.Count-2;
+                t.CreateButtons(this.boxButtonMouseDownHandler, tabPage1);
+            } else if(a.SelectedItem.ToString().Contains("Profile "))
+            {
+                Console.WriteLine(a.SelectedIndex);
+                currentGenerator = profileGenerators[a.SelectedIndex];
+                Console.WriteLine("Profile was selected");
+                currentGenerator.LoadButtons(this.boxButtonMouseDownHandler, tabPage1);
+                currentGenerator.MakeConfig();
+            }
+        }
+
+        private void radioButton2_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

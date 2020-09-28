@@ -13,29 +13,29 @@ namespace LayoutDesigner
 
         /// <summary>
         /// Defines the maximum width for all FlexibleMessageBox instances in percent of the working area.
-        /// 
-        /// Allowed values are 0.2 - 1.0 where: 
+        ///
+        /// Allowed values are 0.2 - 1.0 where:
         /// 0.2 means:  The FlexibleMessageBox can be at most half as wide as the working area.
         /// 1.0 means:  The FlexibleMessageBox can be as wide as the working area.
-        /// 
+        ///
         /// Default is: 70% of the working area width.
         /// </summary>
         public static double MAX_WIDTH_FACTOR = 0.7;
 
         /// <summary>
         /// Defines the maximum height for all FlexibleMessageBox instances in percent of the working area.
-        /// 
-        /// Allowed values are 0.2 - 1.0 where: 
+        ///
+        /// Allowed values are 0.2 - 1.0 where:
         /// 0.2 means:  The FlexibleMessageBox can be at most half as high as the working area.
         /// 1.0 means:  The FlexibleMessageBox can be as high as the working area.
-        /// 
+        ///
         /// Default is: 90% of the working area height.
         /// </summary>
         public static double MAX_HEIGHT_FACTOR = 0.9;
 
         /// <summary>
         /// Defines the font for all FlexibleMessageBox instances.
-        /// 
+        ///
         /// Default is: SystemFonts.MessageBoxFont
         /// </summary>
         public static Font FONT = SystemFonts.MessageBoxFont;
@@ -217,9 +217,9 @@ namespace LayoutDesigner
                 this.panel1.SuspendLayout();
                 ((System.ComponentModel.ISupportInitialize)(this.pictureBoxForIcon)).BeginInit();
                 this.SuspendLayout();
-                // 
+                //
                 // button1
-                // 
+                //
                 this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
                 this.button1.AutoSize = true;
                 this.button1.DialogResult = System.Windows.Forms.DialogResult.OK;
@@ -231,9 +231,9 @@ namespace LayoutDesigner
                 this.button1.Text = "OK";
                 this.button1.UseVisualStyleBackColor = true;
                 this.button1.Visible = false;
-                // 
+                //
                 // richTextBoxMessage
-                // 
+                //
                 this.richTextBoxMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                 | System.Windows.Forms.AnchorStyles.Left)
                 | System.Windows.Forms.AnchorStyles.Right)));
@@ -251,9 +251,9 @@ namespace LayoutDesigner
                 this.richTextBoxMessage.TabStop = false;
                 this.richTextBoxMessage.Text = "<Message>";
                 this.richTextBoxMessage.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.richTextBoxMessage_LinkClicked);
-                // 
+                //
                 // panel1
-                // 
+                //
                 this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                 | System.Windows.Forms.AnchorStyles.Left)
                 | System.Windows.Forms.AnchorStyles.Right)));
@@ -264,18 +264,18 @@ namespace LayoutDesigner
                 this.panel1.Name = "panel1";
                 this.panel1.Size = new System.Drawing.Size(268, 59);
                 this.panel1.TabIndex = 1;
-                // 
+                //
                 // pictureBoxForIcon
-                // 
+                //
                 this.pictureBoxForIcon.BackColor = System.Drawing.Color.Transparent;
                 this.pictureBoxForIcon.Location = new System.Drawing.Point(15, 19);
                 this.pictureBoxForIcon.Name = "pictureBoxForIcon";
                 this.pictureBoxForIcon.Size = new System.Drawing.Size(32, 32);
                 this.pictureBoxForIcon.TabIndex = 8;
                 this.pictureBoxForIcon.TabStop = false;
-                // 
+                //
                 // button2
-                // 
+                //
                 this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
                 this.button2.DialogResult = System.Windows.Forms.DialogResult.OK;
                 this.button2.Location = new System.Drawing.Point(92, 67);
@@ -286,9 +286,9 @@ namespace LayoutDesigner
                 this.button2.Text = "OK";
                 this.button2.UseVisualStyleBackColor = true;
                 this.button2.Visible = false;
-                // 
+                //
                 // button3
-                // 
+                //
                 this.button3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
                 this.button3.AutoSize = true;
                 this.button3.DialogResult = System.Windows.Forms.DialogResult.OK;
@@ -300,9 +300,9 @@ namespace LayoutDesigner
                 this.button3.Text = "OK";
                 this.button3.UseVisualStyleBackColor = true;
                 this.button3.Visible = false;
-                // 
+                //
                 // FlexibleMessageBoxForm
-                // 
+                //
                 this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
                 this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
                 this.ClientSize = new System.Drawing.Size(260, 102);
@@ -346,7 +346,7 @@ namespace LayoutDesigner
             //These are the possible buttons (in a standard MessageBox)
             private enum ButtonID { OK = 0, CANCEL, YES, NO, ABORT, RETRY, IGNORE };
 
-            //These are the buttons texts for different languages. 
+            //These are the buttons texts for different languages.
             //If you want to add a new language, add it here and in the GetButtonText-Function
             private enum TwoLetterISOLanguageID { en, de, es, it };
             private static readonly String[] BUTTON_TEXTS_ENGLISH_EN = { "OK", "Cancel", "&Yes", "&No", "&Abort", "&Retry", "&Ignore" }; //Note: This is also the fallback language
@@ -418,8 +418,8 @@ namespace LayoutDesigner
             }
 
             /// <summary>
-            /// Ensure the given working area factor in the range of  0.2 - 1.0 where: 
-            /// 
+            /// Ensure the given working area factor in the range of  0.2 - 1.0 where:
+            ///
             /// 0.2 means:  20 percent of the working area height or width.
             /// 1.0 means:  100 percent of the working area height or width.
             /// </summary>
@@ -437,7 +437,7 @@ namespace LayoutDesigner
             }
 
             /// <summary>
-            /// Set the dialogs start position when given. 
+            /// Set the dialogs start position when given.
             /// Otherwise center the dialog on the current screen.
             /// </summary>
             /// <param name="flexibleMessageBoxForm">The FlexibleMessageBox dialog.</param>
@@ -456,7 +456,7 @@ namespace LayoutDesigner
 
             /// <summary>
             /// Calculate the dialogs start size (Try to auto-size width to show longest text row).
-            /// Also set the maximum dialog size. 
+            /// Also set the maximum dialog size.
             /// </summary>
             /// <param name="flexibleMessageBoxForm">The FlexibleMessageBox dialog.</param>
             /// <param name="text">The text (the longest text row is used to calculate the dialog width).</param>
@@ -490,7 +490,7 @@ namespace LayoutDesigner
             }
 
             /// <summary>
-            /// Set the dialogs icon. 
+            /// Set the dialogs icon.
             /// When no icon is used: Correct placement and width of rich text box.
             /// </summary>
             /// <param name="flexibleMessageBoxForm">The FlexibleMessageBox dialog.</param>
@@ -521,7 +521,7 @@ namespace LayoutDesigner
             }
 
             /// <summary>
-            /// Set dialog buttons visibilities and texts. 
+            /// Set dialog buttons visibilities and texts.
             /// Also set a default button.
             /// </summary>
             /// <param name="flexibleMessageBoxForm">The FlexibleMessageBox dialog.</param>
@@ -773,7 +773,7 @@ namespace LayoutDesigner
                 flexibleMessageBoxForm.Font = FONT;
                 flexibleMessageBoxForm.richTextBoxMessage.Font = FONT;
 
-                //Calculate the dialogs start size (Try to auto-size width to show longest text row). Also set the maximum dialog size. 
+                //Calculate the dialogs start size (Try to auto-size width to show longest text row). Also set the maximum dialog size.
                 SetDialogSizes(flexibleMessageBoxForm, text, caption);
 
                 //Set the dialogs start position when given. Otherwise center the dialog on the current screen.
