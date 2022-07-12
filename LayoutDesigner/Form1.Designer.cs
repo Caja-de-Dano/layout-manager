@@ -60,6 +60,11 @@
             this.cSDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.hALFToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mIRRORToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.resetToDefaultButton = new System.Windows.Forms.Button();
@@ -69,13 +74,14 @@
             this.radioButton2 = new System.Windows.Forms.RadioButton();
             this.radioButton1 = new System.Windows.Forms.RadioButton();
             this.button1 = new System.Windows.Forms.Button();
-            this.exportLayoutButton = new System.Windows.Forms.Button();
             this.generateAndLoadButton = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
+            this.exportLayoutButton = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.label1 = new System.Windows.Forms.Label();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.backgroundWorker2 = new System.ComponentModel.BackgroundWorker();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.buttonSwapMenu.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -115,10 +121,15 @@
             this.cSDToolStripMenuItem,
             this.hALFToolStripMenuItem,
             this.mIRRORToolStripMenuItem,
+            this.toolStripMenuItem2,
+            this.toolStripMenuItem3,
+            this.toolStripMenuItem4,
+            this.toolStripMenuItem5,
+            this.toolStripMenuItem6,
             this.toolStripSeparator1,
             this.toolStripMenuItem1});
             this.buttonSwapMenu.Name = "buttonSwapMenu";
-            this.buttonSwapMenu.Size = new System.Drawing.Size(183, 660);
+            this.buttonSwapMenu.Size = new System.Drawing.Size(183, 770);
             this.buttonSwapMenu.Closing += new System.Windows.Forms.ToolStripDropDownClosingEventHandler(this.buttonSwapMenu_Closing);
             this.buttonSwapMenu.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.buttonSwapMenu_ItemClicked);
             // 
@@ -300,6 +311,36 @@
             this.mIRRORToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
             this.mIRRORToolStripMenuItem.Text = "MIRROR";
             // 
+            // toolStripMenuItem2
+            // 
+            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(182, 22);
+            this.toolStripMenuItem2.Text = "TRAINING TOGGLE";
+            // 
+            // toolStripMenuItem3
+            // 
+            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(182, 22);
+            this.toolStripMenuItem3.Text = "RESET TRAINING";
+            // 
+            // toolStripMenuItem4
+            // 
+            this.toolStripMenuItem4.Name = "toolStripMenuItem4";
+            this.toolStripMenuItem4.Size = new System.Drawing.Size(182, 22);
+            this.toolStripMenuItem4.Text = "SAVE_STATE";
+            // 
+            // toolStripMenuItem5
+            // 
+            this.toolStripMenuItem5.Name = "toolStripMenuItem5";
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(182, 22);
+            this.toolStripMenuItem5.Text = "LOAD_STATE";
+            // 
+            // toolStripMenuItem6
+            // 
+            this.toolStripMenuItem6.Name = "toolStripMenuItem6";
+            this.toolStripMenuItem6.Size = new System.Drawing.Size(182, 22);
+            this.toolStripMenuItem6.Text = "UPB";
+            // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
@@ -326,6 +367,7 @@
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.SystemColors.WindowFrame;
+            this.tabPage1.Controls.Add(this.checkBox1);
             this.tabPage1.Controls.Add(this.profileComboBox);
             this.tabPage1.Controls.Add(this.button2);
             this.tabPage1.Controls.Add(this.resetToDefaultButton);
@@ -399,17 +441,6 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // exportLayoutButton
-            // 
-            this.exportLayoutButton.Enabled = false;
-            this.exportLayoutButton.Location = new System.Drawing.Point(1511, 777);
-            this.exportLayoutButton.Name = "exportLayoutButton";
-            this.exportLayoutButton.Size = new System.Drawing.Size(205, 23);
-            this.exportLayoutButton.TabIndex = 6;
-            this.exportLayoutButton.Text = "Debug Code";
-            this.exportLayoutButton.UseVisualStyleBackColor = true;
-            this.exportLayoutButton.Click += new System.EventHandler(this.exportLayoutButton_Click);
-            // 
             // generateAndLoadButton
             // 
             this.generateAndLoadButton.BackColor = System.Drawing.Color.Transparent;
@@ -430,6 +461,17 @@
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(227, 451);
             this.textBox1.TabIndex = 1;
+            // 
+            // exportLayoutButton
+            // 
+            this.exportLayoutButton.Enabled = false;
+            this.exportLayoutButton.Location = new System.Drawing.Point(1511, 777);
+            this.exportLayoutButton.Name = "exportLayoutButton";
+            this.exportLayoutButton.Size = new System.Drawing.Size(205, 23);
+            this.exportLayoutButton.TabIndex = 6;
+            this.exportLayoutButton.Text = "Debug Code";
+            this.exportLayoutButton.UseVisualStyleBackColor = true;
+            this.exportLayoutButton.Click += new System.EventHandler(this.exportLayoutButton_Click);
             // 
             // tabControl1
             // 
@@ -461,6 +503,16 @@
             this.backgroundWorker1.WorkerReportsProgress = true;
             this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
             this.backgroundWorker1.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker1_ProgressChanged);
+            // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.Location = new System.Drawing.Point(1248, 668);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(85, 17);
+            this.checkBox1.TabIndex = 12;
+            this.checkBox1.Text = "Melee Mode";
+            this.checkBox1.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -530,6 +582,12 @@
         private System.Windows.Forms.RadioButton radioButton1;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.ComboBox profileComboBox;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem3;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem4;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem5;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem6;
+        private System.Windows.Forms.CheckBox checkBox1;
     }
 }
 

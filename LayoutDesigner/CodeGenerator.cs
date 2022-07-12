@@ -213,7 +213,7 @@ namespace LayoutDesigner
             this.lookupTable.Add("SODC_L100", "if(direction_pressed) { ReportData->LX = 128; ReportData->LY = 128; } else { ReportData->LX = 0;ReportData->LY = 128;direction_pressed = true;}");
             this.lookupTable.Add("U100", "if(direction_pressed){ReportData->LY = 0;}else{ReportData->LX = 128;ReportData->LY = 0;}");
             this.lookupTable.Add("D100", "if(direction_pressed){ReportData->LY = 255;}else{ReportData->LX = 128;ReportData->LY = 255;}");
-            this.lookupTable.Add("MIRROR", "if(direction_pressed) {if(ReportData->LX == 0) {ReportData->LX = 255;} else {ReportData->LX = 0;}} else {mirror_pressed = true;}");
+            this.lookupTable.Add("MIRROR", "mirror_pressed = true;");
             this.lookupTable.Add("HALF", "if(direction_pressed) {if(ReportData->LX == 0) {ReportData->LX = 60;} else {ReportData->LX = 196;}}if(ReportData->LY == 255) {ReportData->LY = 192;} else if(ReportData->LY == 0) {ReportData->LY = 60;}");
             this.lookupTable.Add("HATU", "ReportData->HAT = HAT_TOP;");
             this.lookupTable.Add("HATD", "ReportData->HAT = HAT_BOTTOM;");
@@ -221,8 +221,19 @@ namespace LayoutDesigner
             this.lookupTable.Add("HATR", "ReportData->HAT = HAT_RIGHT;");
             this.lookupTable.Add("HOME", "ReportData->Button |= SWITCH_HOME;");
             this.lookupTable.Add("CAPTURE", "ReportData->Button |= SWITCH_CAPTURE;");
-            this.lookupTable.Add("LEFT STICK PRESS", "ReportData->Button |= SWITCH_LCLICK;");
-            this.lookupTable.Add("RIGHT STICK PRESS", "ReportData->Button |= SWITCH_RCLICK;");
+            this.lookupTable.Add("LEFTSTICKPRESS", "ReportData->Button |= SWITCH_LCLICK;");
+            this.lookupTable.Add("RIGHTSTICKPRESS", "ReportData->Button |= SWITCH_RCLICK;");
+            this.lookupTable.Add("TRAININGTOGGLE", "ReportData->Button |= SWITCH_L | SWITCH_X; ReportData->HAT = HAT_LEFT;");
+            this.lookupTable.Add("RESETTRAINING", "ReportData->Button |= SWITCH_L | SWITCH_R | SWITCH_A;");
+            this.lookupTable.Add("SAVE_STATE", "ReportData->HAT = HAT_BOTTOM; ReportData->Button |= SWITCH_R;");
+            this.lookupTable.Add("LOAD_STATE", "ReportData->HAT = HAT_TOP; ReportData->Button |= SWITCH_R;");
+            this.lookupTable.Add("UPB", "ReportData->LY = 0; ReportData->Button |= SWITCH_B;");
+            /// melee things
+            this.lookupTable.Add("MELEE_R100", "ReportData->LX = 255; ReportData->LY = 128; direction_pressed = true;");
+            this.lookupTable.Add("MELEE_L100", "ReportData->LX = 0; ReportData->LY = 128;direction_pressed = true;");
+            this.lookupTable.Add("MELEE_U100", "if(direction_pressed){ReportData->LY = 48;}else{ReportData->LX = 128;ReportData->LY = 48;}");
+            this.lookupTable.Add("MELEE_D100", "if(direction_pressed){ReportData->LY = 208;}else{ReportData->LX = 128;ReportData->LY = 208;}");
+            this.lookupTable.Add("MELEE_HALF", "if(direction_pressed) {if(ReportData->LX == 0) {ReportData->LX = 70;} else {ReportData->LX = 130;}}if(ReportData->LY > 128) {ReportData->LY = 150;} else if(ReportData->LY < 128) {ReportData->LY = 76;}");
         }
     }
 }

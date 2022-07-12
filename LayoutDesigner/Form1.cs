@@ -40,6 +40,8 @@ namespace LayoutDesigner
         // DEVICE ID: HID\VID_0F0D&PID_0092\6&22F43165&2&0000
         // NEW NEW BOX
         // DEVICE ID: HID\VID_0F0D&PID_0092\6&22F43165&2&0000
+        // double top button box
+        // DEVICE ID: HID\VID_0F0D&PID_0094\6&200246DC&0&0000
         private void getUsbDevices()
         {
             bool found = false;
@@ -57,11 +59,20 @@ namespace LayoutDesigner
                     Console.WriteLine("DEVICE ID: " + (string)device.GetPropertyValue("DeviceID"));
                     Console.WriteLine("PNPDeviceID: " + (string)device.GetPropertyValue("PNPDeviceID"));
                     Console.WriteLine("Manufacturer: " + (string)device.GetPropertyValue("Manufacturer"));
+                    Console.WriteLine("name: " + (string)device.GetPropertyValue("Name"));
 
                     found = true;
-                    if (deviceId.Contains("17DE8C1"))
+                    if (deviceId.Contains("17DE8C1")) // double stick box
                     {
                         backgroundWorker1.ReportProgress(3);
+                    }
+                    else if(deviceId.Contains("200246DC")) // double top button box
+                    {
+                        backgroundWorker1.ReportProgress(4);
+                    }
+                    else if(deviceId.Contains("PID_0093"))
+                    {
+                        backgroundWorker1.ReportProgress(5);
                     }
                     else
                     {
@@ -129,12 +140,25 @@ namespace LayoutDesigner
 
         private string generateCode()
         {
-            string originalTempalte = File.ReadAllText("template.c");
-            if(profileGenerators.Count == 1)
+            string originalTempalte = "";
+            if (label1.Text == "Device Detected (Caja Grande v1.2)")
             {
-                foreach(string line in profileGenerators[0].ExportConfig().Split(Environment.NewLine.ToCharArray()))
+                originalTempalte = File.ReadAllText("template_2.c");
+                if(radioButton2.Checked == true)
                 {
-                    if(line.Contains(","))
+                    originalTempalte = File.ReadAllText("template_2_socd.c");
+                }
+            }
+            else
+            {
+                originalTempalte = File.ReadAllText("template.c");
+            }
+
+            if (profileGenerators.Count == 1)
+            {
+                foreach (string line in profileGenerators[0].ExportConfig().Split(Environment.NewLine.ToCharArray()))
+                {
+                    if (line.Contains(","))
                     {
                         Console.WriteLine("LINE:" + line);
                         string[] buttonCommand = line.Split(',');
@@ -160,13 +184,51 @@ namespace LayoutDesigner
                         else
                         {
                             // TODO: actually check for SODC radio here
-                            if(command == "L100")
+                            /// XXX: not sure whats being done here? is this actual sodc?
+                            // block commenting it out for now to do active melee replacement on the directionals
+                            /*
+                            if (command == "L100")
                             {
                                 replaceCodeString = currentGenerator.FetchCommand("SODC_L100");
                             }
-                            else
+                            */
+                            if(checkBox1.Checked)
                             {
-                                replaceCodeString = currentGenerator.FetchCommand(command);
+                                if (command == "L100")
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand("MELEE_L100");
+                                }
+                                else if (command == "R100")
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand("MELEE_R100");
+
+                                }
+                                else if (command == "U100")
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand("MELEE_U100");
+                                }
+                                else if (command == "D100")
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand("MELEE_D100");
+                                }
+                                else if (command == "HALF")
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand("MELEE_HALF");
+                                }
+                                else
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand(command);
+                                }
+                            } else
+                            {
+                                // TODO: apply this to both cases and actually check the radio buttons
+                                if (command == "L100")
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand("SODC_L100");
+                                } else
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand(command);
+                                }
                             }
                         }
                         // COMO: need to work out the way we'd replace the code for a multiple command in this section
@@ -184,7 +246,8 @@ namespace LayoutDesigner
                 originalTempalte.Replace("//STARTUP", "ReportData->Button |= SWITCH_L | SWITCH_R;");
                 File.WriteAllText("Joystick.c", originalTempalte);
                 return originalTempalte;
-            } else
+            }
+            else
             {
                 List<string> rawCommandList = new List<string>();
 
@@ -222,7 +285,7 @@ namespace LayoutDesigner
                             }
 
 
-                            if(buttonList.Contains(button))
+                            if (buttonList.Contains(button))
                             {
                                 Console.WriteLine("ALREADY IN THERE");
                                 int a = buttonList.IndexOf(button);
@@ -242,7 +305,7 @@ namespace LayoutDesigner
                     Console.WriteLine("PROFILE PROCESSING");
                 }
                 int counter = 0;
-                foreach(string b in buttonList)
+                foreach (string b in buttonList)
                 {
                     Console.WriteLine("BIG thing:" + b);
                     string key_check = b.Substring(2);
@@ -282,15 +345,23 @@ namespace LayoutDesigner
         // XXX: this will break with the multiple commands on the button
         private string generate_joystick()
         {
-            string originalTempalte = File.ReadAllText("template.c");
+            string originalTempalte = "";
+            if (label1.Text == "Device Detected (Caja Grande v1.2)")
+            {
+                originalTempalte = File.ReadAllText("template_2.c");
+            } else
+            {
+                originalTempalte = File.ReadAllText("template.c");
+            }
+
             foreach (string line in File.ReadLines("config.dbox"))
             {
                 string[] buttonCommand = line.Split(',');
-                string button = "//"+buttonCommand[0];
+                string button = "//" + buttonCommand[0];
                 string command = Regex.Replace(buttonCommand[1], @"\s+", "");
                 string altCommand = "";
                 string replaceCodeString = "";//will be filled out depending if the command contains an alt / just a norm
-                if(command.Contains('|'))
+                if (command.Contains('|'))
                 {
                     string[] commands = command.Split('|');
                     string doubleCommand = "if(mirror_pressed) { //ALT } else { //NORM }";
@@ -301,7 +372,8 @@ namespace LayoutDesigner
                     Console.WriteLine("alt command is present");
                     Console.WriteLine(doubleCommand);
                     replaceCodeString = doubleCommand;
-                } else
+                }
+                else
                 {
                     replaceCodeString = currentGenerator.FetchCommand(command);
                 }
@@ -309,9 +381,10 @@ namespace LayoutDesigner
                 if (currentGenerator.ValidKey(command))
                 {
                     originalTempalte = originalTempalte.Replace(button, replaceCodeString);
-                } else
+                }
+                else
                 {
-                    Console.WriteLine("skipping "+command);
+                    Console.WriteLine("skipping " + command);
                 }
             }
             File.WriteAllText("Joystick.c", originalTempalte);
@@ -384,12 +457,13 @@ namespace LayoutDesigner
         private void buttonSwapMenu_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
             string newText = e.ClickedItem.Text;
-            if(newText == "Remove Alt Button")
+            if (newText == "Remove Alt Button")
             {
                 currentGenerator.SetAltCommand("");
                 currentGenerator.SetButtonText();
                 this.generateConfig();
-            } else
+            }
+            else
             {
                 if (rightClickedMenu)
                 {
@@ -419,14 +493,19 @@ namespace LayoutDesigner
         private void generateAndLoadButton_Click(object sender, EventArgs e)
         {
             // OLD WAY
-            //File.WriteAllText("config.dbox", textBox1.Text);
+            File.WriteAllText("config.dbox", textBox1.Text);
             //string joystickCode = generate_joystick();
             string joystickCode = generateCode();
 
             // Create a 'WebRequest' object with the specified url.
             string data = joystickCode;
             byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-            WebRequest request = WebRequest.Create(Environment.GetEnvironmentVariable("WEB_HOST") + "/make-it");
+            string web_target = "http://143.110.136.163/make-it";
+            if (label1.Text == "Device Detected (Caja Grande v1.2)")
+            {
+                web_target += "?version=2";
+            }
+            WebRequest request = WebRequest.Create(web_target);
 
             //request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             request.ContentLength = dataBytes.Length;
@@ -456,19 +535,28 @@ namespace LayoutDesigner
                 {
                     Process ps = new Process();
                     ps.StartInfo.FileName = "teensy_loader_cli.exe";
-                    ps.StartInfo.Arguments = "-w -v -mmcu=at90usb1286 Joystick.hex";
+                    string arguments = "";
+                    if (label1.Text == "Device Detected (Caja Grande v1.2)")
+                    {
+                        arguments = "-w -v -mmcu=atmega32u4 Joystick.hex";
+                    } else
+                    {
+                        arguments = "-w -v -mmcu=at90usb1286 Joystick.hex";
+                    }
+                    ps.StartInfo.Arguments = arguments;
                     ps.StartInfo.UseShellExecute = false;
                     ps.StartInfo.CreateNoWindow = true;
                     ps.StartInfo.RedirectStandardOutput = true;
                     ps.OutputDataReceived += (s, args) =>
                     {
-                        if(!String.IsNullOrEmpty(args.Data))
+                        if (!String.IsNullOrEmpty(args.Data))
                         {
                             if (args.Data != null && args.Data.Contains("Waiting for Teensy device"))
                             {
                                 Console.WriteLine("FOUND");
                                 waitingForPress = true;
-                                generateAndLoadButton.BeginInvoke(new MethodInvoker(() => {
+                                generateAndLoadButton.BeginInvoke(new MethodInvoker(() =>
+                                {
                                     label1.Text = "Open and Press Button Inside";
                                     label1.ForeColor = System.Drawing.Color.Red;
                                     generateAndLoadButton.Text = "Open and Press";
@@ -479,7 +567,8 @@ namespace LayoutDesigner
                             {
                                 Console.WriteLine("WROTE TO BOX");
                                 ps.Close();
-                                generateAndLoadButton.BeginInvoke(new MethodInvoker(() => {
+                                generateAndLoadButton.BeginInvoke(new MethodInvoker(() =>
+                                {
                                     generateAndLoadButton.Text = "Generate Config";
                                     generateAndLoadButton.BackColor = Color.Transparent;
                                 }));
@@ -512,7 +601,7 @@ namespace LayoutDesigner
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            switch(e.ProgressPercentage)
+            switch (e.ProgressPercentage)
             {
                 case (1):
                     label1.ForeColor = System.Drawing.Color.Red;
@@ -524,6 +613,14 @@ namespace LayoutDesigner
                     break;
                 case (3):
                     label1.Text = "Device Detected (Palanaca 2)";
+                    label1.ForeColor = System.Drawing.Color.Green;
+                    break;
+                case (4):
+                    label1.Text = "Device Detected (El Doble Boton)";
+                    label1.ForeColor = System.Drawing.Color.Green;
+                    break;
+                case (5):
+                    label1.Text = "Device Detected (Caja Grande v1.2)";
                     label1.ForeColor = System.Drawing.Color.Green;
                     break;
             }
@@ -548,7 +645,7 @@ namespace LayoutDesigner
             var dialog = new OpenFileDialog();
             dialog.Filter = "Caja Config (*.caja)|*.caja";
             dialog.FilterIndex = 1;
-            if(dialog.ShowDialog() == DialogResult.OK)
+            if (dialog.ShowDialog() == DialogResult.OK)
             {
                 textBox1.Text = "";
                 //Read the contents of the file into a stream
@@ -558,7 +655,8 @@ namespace LayoutDesigner
                 using (StreamReader reader = new StreamReader(fileStream))
                 {
                     string s = string.Empty;
-                    while((s = reader.ReadLine()) != null) {
+                    while ((s = reader.ReadLine()) != null)
+                    {
                         // still need to split
                         textBox1.Text += s + System.Environment.NewLine;
                         string[] commands = s.Trim().Split(',');
@@ -603,17 +701,18 @@ namespace LayoutDesigner
         private void profileComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             ComboBox a = (ComboBox)sender;
-            if(a.SelectedItem.ToString() == "Add Profile")
+            if (a.SelectedItem.ToString() == "Add Profile")
             {
-                a.Items.Insert(a.Items.Count - 1, "Profile "+ a.Items.Count);
+                a.Items.Insert(a.Items.Count - 1, "Profile " + a.Items.Count);
                 Console.WriteLine("SHOULD ADD A PROFILE");
                 CodeGenerator t = new CodeGenerator();
                 t.commandTextbox = textBox1;
                 profileGenerators.Add(t);
                 Console.WriteLine("PROFILE: " + profileGenerators.Count);
-                a.SelectedIndex = a.Items.Count-2;
+                a.SelectedIndex = a.Items.Count - 2;
                 t.CreateButtons(this.boxButtonMouseDownHandler, tabPage1);
-            } else if(a.SelectedItem.ToString().Contains("Profile "))
+            }
+            else if (a.SelectedItem.ToString().Contains("Profile "))
             {
                 Console.WriteLine(a.SelectedIndex);
                 currentGenerator = profileGenerators[a.SelectedIndex];
