@@ -141,7 +141,8 @@ namespace LayoutDesigner
         private string generateCode()
         {
             string originalTempalte = "";
-            if (label1.Text == "Device Detected (Caja Grande v1.2)")
+            //if (label1.Text == "Device Detected (Caja Grande v1.2)")
+            if (small_board_checkbox.Checked == true)
             {
                 originalTempalte = File.ReadAllText("template_2.c");
                 if(radioButton2.Checked == true)
@@ -219,7 +220,18 @@ namespace LayoutDesigner
                                 {
                                     replaceCodeString = currentGenerator.FetchCommand(command);
                                 }
-                            } else
+                            } else if(radioButton2.Checked == true)
+                            {
+                                if (command == "HALF")
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand("SOCD_HALF");
+                                }
+                                else
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand(command);
+                                }
+                            }
+                            else
                             {
                                 // TODO: apply this to both cases and actually check the radio buttons
                                 if (command == "L100")
@@ -501,7 +513,8 @@ namespace LayoutDesigner
             string data = joystickCode;
             byte[] dataBytes = Encoding.UTF8.GetBytes(data);
             string web_target = "http://143.110.136.163/make-it";
-            if (label1.Text == "Device Detected (Caja Grande v1.2)")
+            //if (label1.Text == "Device Detected (Caja Grande v1.2)")
+            if (small_board_checkbox.Checked == true)
             {
                 web_target += "?version=2";
             }
@@ -536,8 +549,9 @@ namespace LayoutDesigner
                     Process ps = new Process();
                     ps.StartInfo.FileName = "teensy_loader_cli.exe";
                     string arguments = "";
-                    if (label1.Text == "Device Detected (Caja Grande v1.2)")
-                    {
+                    //if (label1.Text == "Device Detected (Caja Grande v1.2)")
+                    if (small_board_checkbox.Checked == true)
+                        {
                         arguments = "-w -v -mmcu=atmega32u4 Joystick.hex";
                     } else
                     {

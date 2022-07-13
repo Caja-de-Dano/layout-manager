@@ -215,6 +215,7 @@ namespace LayoutDesigner
             this.lookupTable.Add("D100", "if(direction_pressed){ReportData->LY = 255;}else{ReportData->LX = 128;ReportData->LY = 255;}");
             this.lookupTable.Add("MIRROR", "mirror_pressed = true;");
             this.lookupTable.Add("HALF", "if(direction_pressed) {if(ReportData->LX == 0) {ReportData->LX = 60;} else {ReportData->LX = 196;}}if(ReportData->LY == 255) {ReportData->LY = 192;} else if(ReportData->LY == 0) {ReportData->LY = 60;}");
+            this.lookupTable.Add("SOCD_HALF", "if(last_dir != -1) {  if(ReportData->LX == 0) {    ReportData->LX = 60;  } else {    ReportData->LX = 196;  }}if(ReportData->LY == 255) {  ReportData->LY = 192;} else if(ReportData->LY == 0) {  ReportData->LY = 60;}");
             this.lookupTable.Add("HATU", "ReportData->HAT = HAT_TOP;");
             this.lookupTable.Add("HATD", "ReportData->HAT = HAT_BOTTOM;");
             this.lookupTable.Add("HATL", "ReportData->HAT = HAT_LEFT;");
@@ -234,6 +235,8 @@ namespace LayoutDesigner
             this.lookupTable.Add("MELEE_U100", "if(direction_pressed){ReportData->LY = 48;}else{ReportData->LX = 128;ReportData->LY = 48;}");
             this.lookupTable.Add("MELEE_D100", "if(direction_pressed){ReportData->LY = 208;}else{ReportData->LX = 128;ReportData->LY = 208;}");
             this.lookupTable.Add("MELEE_HALF", "if(direction_pressed) {if(ReportData->LX == 0) {ReportData->LX = 70;} else {ReportData->LX = 130;}}if(ReportData->LY > 128) {ReportData->LY = 150;} else if(ReportData->LY < 128) {ReportData->LY = 76;}");
+            // firefox angle things
+            this.lookupTable.Add("STEEP_TILT", "if(ReportData->LX > 128) {    if(ReportData->LY > 128) {        ReportData->LX = 230;    } else if(ReportData->LY < 128) {        ReportData->LX = 230;        ReportData->LY = 75;    }} else if(ReportData->LX < 128) {    if(ReportData->LY < 128) {        ReportData->LY = 75;    }}");
         }
     }
 }
