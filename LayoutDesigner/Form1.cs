@@ -15,11 +15,20 @@ using System.Text.RegularExpressions;
 //using System.Threading;
 //using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Drawing.Drawing2D;
+
 namespace LayoutDesigner
 {
 
     public partial class Form1 : Form
     {
+        public const int WM_NCLBUTTONDOWN = 0xA1;
+        public const int HT_CAPTION = 0x2;
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern bool ReleaseCapture();
         // these are the default config that I personally use so there might be a need to change this up
         private CodeGenerator masterGenerator = new CodeGenerator();
         private CodeGenerator currentGenerator;
@@ -124,11 +133,7 @@ namespace LayoutDesigner
             InitializeComponent();
             radioButton1.Select();
             getUsbDevices();
-            currentGenerator = masterGenerator;
-            masterGenerator.CreateButtons(this.boxButtonMouseDownHandler, tabPage1);
-            masterGenerator.commandTextbox = textBox1;
-            profileGenerators.Add(masterGenerator);
-            profileComboBox.SelectedIndex = 0;
+            // where we generated before
             this.Icon = Properties.Resources.gunstock_icon;
             this.Text = "Caja de Dano Layout Manager";
         }
@@ -152,7 +157,15 @@ namespace LayoutDesigner
             }
             else
             {
-                originalTempalte = File.ReadAllText("template.c");
+                if (radioButton2.Checked == true)
+                {
+                    originalTempalte = File.ReadAllText("template_socd.c");
+                    Console.WriteLine("TEMPLATE SOCD");
+                }
+                else
+                {
+                    originalTempalte = File.ReadAllText("template.c");
+                }
             }
 
             if (profileGenerators.Count == 1)
@@ -220,27 +233,60 @@ namespace LayoutDesigner
                                 {
                                     replaceCodeString = currentGenerator.FetchCommand(command);
                                 }
-                            } else if(radioButton2.Checked == true)
+                            } else
                             {
-                                if (command == "HALF")
+                                // TODO: apply this to both cases and actually check the radio buttons
+                                if (command == "L100")
                                 {
-                                    replaceCodeString = currentGenerator.FetchCommand("SOCD_HALF");
+                                    replaceCodeString = currentGenerator.FetchCommand("SODC_L100");
+                                } else if(command == "D100")
+                                {
+                                    if(radioButton2.Checked == true)
+                                    {
+                                        if(multiversus_checkbox.Checked == true)
+                                        {
+                                            replaceCodeString = currentGenerator.FetchCommand("SODC_D100_multi");
+                                        }
+                                        else
+                                        {
+                                            replaceCodeString = currentGenerator.FetchCommand("SODC_D100");
+                                        }
+                                    }
                                 }
                                 else
                                 {
                                     replaceCodeString = currentGenerator.FetchCommand(command);
                                 }
                             }
-                            else
+                            if (radioButton2.Checked == true)
                             {
-                                // TODO: apply this to both cases and actually check the radio buttons
-                                if (command == "L100")
+                                if (command == "HALF")
                                 {
-                                    replaceCodeString = currentGenerator.FetchCommand("SODC_L100");
-                                } else
+                                    replaceCodeString = currentGenerator.FetchCommand("SOCD_HALF");
+                                }
+                                else if (command == "U100")
+                                {
+                                    replaceCodeString = currentGenerator.FetchCommand("SOCD_U100");
+                                }
+                                else if (command == "D100")
+                                {
+                                    if(multiversus_checkbox.Checked == true)
+                                    {
+                                        replaceCodeString = currentGenerator.FetchCommand("SOCD_D100_multi");
+                                    }
+                                    else
+                                    {
+                                        replaceCodeString = currentGenerator.FetchCommand("SOCD_D100");
+                                    }
+                                }
+                                else
                                 {
                                     replaceCodeString = currentGenerator.FetchCommand(command);
                                 }
+                            }
+                            if(multiversus_checkbox.Checked == true)
+                            {
+
                             }
                         }
                         // COMO: need to work out the way we'd replace the code for a multiple command in this section
@@ -406,6 +452,13 @@ namespace LayoutDesigner
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            currentGenerator = masterGenerator;
+            masterGenerator.CreateButtonsOnForm(this.boxButtonMouseDownHandler, this.panel2.Controls);
+            //masterGenerator.CreateButtons(this.boxButtonMouseDownHandler, tabPage1);
+            masterGenerator.commandTextbox = textBox1;
+            profileGenerators.Add(masterGenerator);
+            profileComboBox.SelectedIndex = 0;
+
             this.generateConfig();
         }
 
@@ -450,7 +503,8 @@ namespace LayoutDesigner
                 rightClickedMenu = false;
                 buttonSwapMenu.Show(Cursor.Position);
                 // experimental drawing stuff here
-                currentGenerator.ChangeButtonColor(SystemColors.ButtonHighlight);
+                //currentGenerator.ChangeButtonColor(SystemColors.ButtonHighlight);
+                currentGenerator.SetActiveButton();
             }
             if (e.Button == MouseButtons.Right)
             {
@@ -463,7 +517,8 @@ namespace LayoutDesigner
         private void buttonSwapMenu_Closing(object sender, CancelEventArgs e)
         {
             // experimental reset the button
-            currentGenerator.ChangeButtonColor(SystemColors.ControlDark);
+            //currentGenerator.ChangeButtonColor(SystemColors.ControlDark);
+            currentGenerator.ResetButton();
         }
 
         private void buttonSwapMenu_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
@@ -496,10 +551,15 @@ namespace LayoutDesigner
                 }
             }
         }
+        private void reset_button_layout()
+        {
+            currentGenerator.CreateButtonsOnForm(this.boxButtonMouseDownHandler, this.panel2.Controls);
+        }
 
         private void resetToDefaultButton_Click(object sender, EventArgs e)
         {
-            currentGenerator.CreateButtons(this.boxButtonMouseDownHandler, tabPage1);
+            //currentGenerator.CreateButtons(this.boxButtonMouseDownHandler, tabPage1);
+            currentGenerator.CreateButtonsOnForm(this.boxButtonMouseDownHandler, this.panel2.Controls);
         }
 
         private void generateAndLoadButton_Click(object sender, EventArgs e)
@@ -569,23 +629,13 @@ namespace LayoutDesigner
                             {
                                 Console.WriteLine("FOUND");
                                 waitingForPress = true;
-                                generateAndLoadButton.BeginInvoke(new MethodInvoker(() =>
-                                {
-                                    label1.Text = "Open and Press Button Inside";
-                                    label1.ForeColor = System.Drawing.Color.Red;
-                                    generateAndLoadButton.Text = "Open and Press";
-                                    generateAndLoadButton.BackColor = Color.Red;
-                                }));
+                                label1.Text = "Open and Press Button Inside";
+                                label1.ForeColor = System.Drawing.Color.Red;
                             }
                             if (args.Data.Contains("Booting"))
                             {
                                 Console.WriteLine("WROTE TO BOX");
                                 ps.Close();
-                                generateAndLoadButton.BeginInvoke(new MethodInvoker(() =>
-                                {
-                                    generateAndLoadButton.Text = "Generate Config";
-                                    generateAndLoadButton.BackColor = Color.Transparent;
-                                }));
                             }
                         }
                     };
@@ -639,8 +689,7 @@ namespace LayoutDesigner
                     break;
             }
         }
-
-        private void button1_Click(object sender, EventArgs e)
+        private void save_layout()
         {
             var dialog = new SaveFileDialog();
             dialog.Filter = "Caja Config (*.caja)|*.caja";
@@ -654,7 +703,11 @@ namespace LayoutDesigner
             }
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e)
+        {
+            save_layout();
+        }
+        private void load_layout_file()
         {
             var dialog = new OpenFileDialog();
             dialog.Filter = "Caja Config (*.caja)|*.caja";
@@ -682,6 +735,11 @@ namespace LayoutDesigner
                 }
                 //this.generateConfig();
             }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            load_layout_file();
         }
 
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
@@ -731,7 +789,7 @@ namespace LayoutDesigner
                 Console.WriteLine(a.SelectedIndex);
                 currentGenerator = profileGenerators[a.SelectedIndex];
                 Console.WriteLine("Profile was selected");
-                currentGenerator.LoadButtons(this.boxButtonMouseDownHandler, tabPage1);
+                currentGenerator.LoadButtons(this.boxButtonMouseDownHandler, this.panel2.Controls);
                 currentGenerator.MakeConfig();
             }
         }
@@ -744,6 +802,160 @@ namespace LayoutDesigner
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            Environment.Exit(0);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+            generate_and_load();
+        }
+
+        private void Form1_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                ReleaseCapture();
+                SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+            }
+        }
+
+        private void generate_config_panel_Click(object sender, EventArgs e)
+        {
+            generate_and_load();
+        }
+
+        private void generate_and_load()
+        {
+            // OLD WAY
+            File.WriteAllText("config.dbox", textBox1.Text);
+            //string joystickCode = generate_joystick();
+            string joystickCode = generateCode();
+
+            // Create a 'WebRequest' object with the specified url.
+            string data = joystickCode;
+            byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+            string web_target = "http://143.110.136.163/make-it";
+            //if (label1.Text == "Device Detected (Caja Grande v1.2)")
+            if (small_board_checkbox.Checked == true)
+            {
+                web_target += "?version=2";
+            }
+            WebRequest request = WebRequest.Create(web_target);
+
+            //request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            request.ContentLength = dataBytes.Length;
+            request.ContentType = "application/json";
+            request.Method = "POST";
+
+            // Send the 'WebRequest' and wait for response.
+
+            using (Stream requestBody = request.GetRequestStream())
+            {
+                requestBody.Write(dataBytes, 0, dataBytes.Length);
+            }
+            WebResponse myWebResponse = request.GetResponse();
+            Stream stream = myWebResponse.GetResponseStream();
+            string responseText = "";
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                responseText = reader.ReadToEnd();
+            }
+            //Console.WriteLine(responseText);
+            myWebResponse.Close();
+            File.WriteAllText("Joystick.hex", responseText);
+
+            try
+            {
+                using (Process p = new Process())
+                {
+                    Process ps = new Process();
+                    ps.StartInfo.FileName = "teensy_loader_cli.exe";
+                    string arguments = "";
+                    //if (label1.Text == "Device Detected (Caja Grande v1.2)")
+                    if (small_board_checkbox.Checked == true)
+                    {
+                        arguments = "-w -v -mmcu=atmega32u4 Joystick.hex";
+                    }
+                    else
+                    {
+                        arguments = "-w -v -mmcu=at90usb1286 Joystick.hex";
+                    }
+                    ps.StartInfo.Arguments = arguments;
+                    ps.StartInfo.UseShellExecute = false;
+                    ps.StartInfo.CreateNoWindow = true;
+                    ps.StartInfo.RedirectStandardOutput = true;
+                    ps.OutputDataReceived += (s, args) =>
+                    {
+                        if (!String.IsNullOrEmpty(args.Data))
+                        {
+                            if (args.Data != null && args.Data.Contains("Waiting for Teensy device"))
+                            {
+                                Console.WriteLine("FOUND");
+                                waitingForPress = true;
+                                button1.BeginInvoke(new MethodInvoker(() =>
+                                {
+                                    label1.Text = "Open and Press Button Inside";
+                                    label1.ForeColor = System.Drawing.Color.Red;
+                                }));
+                            }
+                            if (args.Data.Contains("Booting"))
+                            {
+                                Console.WriteLine("WROTE TO BOX");
+                                ps.Close();
+                            }
+                        }
+                    };
+                    ps.Start();
+                    ps.BeginOutputReadLine();
+                }
+            }
+            catch
+            {
+                Console.WriteLine("Failed to start exe");
+            }
+        }
+
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            generate_and_load();
+        }
+
+        private void label3_Click_1(object sender, EventArgs e)
+        {
+            reset_button_layout();
+        }
+
+        private void panel3_Click(object sender, EventArgs e)
+        {
+            reset_button_layout();
+        }
+
+        private void label4_Click(object sender, EventArgs e)
+        {
+            load_layout_file();
+        }
+
+        private void panel4_Click(object sender, EventArgs e)
+        {
+            load_layout_file();
+        }
+
+        private void label5_Click(object sender, EventArgs e)
+        {
+            save_layout();
+        }
+
+        private void panel5_Click(object sender, EventArgs e)
+        {
+            save_layout();
         }
     }
 }

@@ -68,6 +68,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionLabel.cs" />
     <Compile Include="BoxButton.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -82,23 +83,26 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="BoxButton.resx">
+      <DependentUpon>BoxButton.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
@@ -122,6 +126,13 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="gunstock_classic_10_CNl_icon.ico" />
+    <None Include="Resources\new-icon-white.png" />
+    <None Include="Resources\final-file.png" />
+    <None Include="Resources\final-save.png" />
+    <None Include="Resources\reset-ico.png" />
+    <None Include="Resources\select-ico.png" />
+    <None Include="Resources\package.png" />
+    <None Include="Resources\layout1.png" />
     <None Include="Resources\gunstock_classic_10_CNl_icon.ico" />
     <None Include="Resources\Icon1.ico" />
   </ItemGroup>

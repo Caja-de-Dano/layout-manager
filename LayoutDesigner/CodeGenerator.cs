@@ -24,12 +24,12 @@ namespace LayoutDesigner
         //-400 from x
         // -100 from y
         private Point[] buttonPos = new Point[numButtons] {
-            new Point(565, 250), new Point(665, 218), new Point(586, 143), new Point(687, 102), new Point(450, 10),
-            new Point(775, 238), new Point(792, 120), new Point(874, 278), new Point(900, 166), //hasnt been changed knowing that we subtracted 200 from the below line
-            new Point(120, 179), new Point(318, 235), new Point(245, 108), new Point(220, 207), // subtracting 100 from x (this is the directional buttons)
-            new Point(353, 539), new Point(415, 435), new Point(309, 435), new Point(458, 539),
-            new Point(597, 539), new Point(746, 435), new Point(640, 435), new Point(703, 539),
-            new Point(33, 263), new Point(652, 639)
+            new Point(670, 172), new Point(744, 141), new Point(681, 89), new Point(754, 60), new Point(480, 1),
+            new Point(832, 72), new Point(824, 156), new Point(911, 106), new Point(897, 186), //hasnt been changed knowing that we subtracted 200 from the below line
+            new Point(103, 119), new Point(256, 155), new Point(200, 67), new Point(179, 138), // subtracting 100 from x (this is the directional buttons)
+            new Point(359, 394), new Point(404, 319), new Point(324, 321), new Point(440, 396),
+            new Point(547, 391), new Point(659, 313), new Point(578, 314), new Point(629, 388),
+            new Point(29, 179), new Point(592, 461)
         };
 
         private ConfigButton[] buttons;
@@ -50,6 +50,30 @@ namespace LayoutDesigner
         public bool ValidKey(string lookupKey)
         {
             return this.lookupTable.Contains(lookupKey);
+        }
+
+        public void CreateButtonsOnForm(Action<object, MouseEventArgs> mouseHandler, Control.ControlCollection controls)
+        {
+            // remove buttons here
+            while (currentButtons.Count > 0)
+            {
+                BoxButton a = currentButtons[0];
+                currentButtons.RemoveAt(0);
+                //Form1.Controls
+                controls.Remove(a);
+                //tabPage.Controls.Remove(a);
+            }
+            for (var i = 0; i < numButtons; i++)
+            {
+                buttonValues[i] = defaultButtonValues[i];
+                BoxButton temp = new BoxButton(defaultButtonValues[i], buttonPos[i], i);
+                temp.MouseDown += new MouseEventHandler(mouseHandler);
+
+                controls.Add(temp);
+                temp.BringToFront();
+                currentButtons.Add(temp);
+            }
+            //mainTab = tabPage;
         }
 
         // NOTE: automatically resets the buttons
@@ -74,24 +98,23 @@ namespace LayoutDesigner
             mainTab = tabPage;
         }
 
-        public void LoadButtons(Action<object, MouseEventArgs> mouseHandler, TabPage tabPage)
+        public void LoadButtons(Action<object, MouseEventArgs> mouseHandler, Control.ControlCollection controls)
         {
             // remove buttons here
             while (currentButtons.Count > 0)
             {
                 BoxButton a = currentButtons[0];
                 currentButtons.RemoveAt(0);
-                tabPage.Controls.Remove(a);
+                controls.Remove(a);
             }
             for (var i = 0; i < numButtons; i++)
             {
                 BoxButton temp = new BoxButton(buttonValues[i], buttonPos[i], i);
                 temp.MouseDown += new MouseEventHandler(mouseHandler);
 
-                tabPage.Controls.Add(temp);
+                controls.Add(temp);
                 currentButtons.Add(temp);
             }
-            mainTab = tabPage;
 
         }
 
@@ -136,6 +159,16 @@ namespace LayoutDesigner
         public bool CheckTextMatch(string text)
         {
             return (text == selectedButton.NormalCommand || text == selectedButton.AltCommand);
+        }
+
+        public void SetActiveButton()
+        {
+            selectedButton.ForeColor = Color.Green;
+        }
+
+        public void ResetButton()
+        {
+            selectedButton.ForeColor = Color.Black;
         }
 
         public void ChangeButtonColor(Color selected)
@@ -211,8 +244,12 @@ namespace LayoutDesigner
             this.lookupTable.Add("R100", "ReportData->LX = 255;ReportData->LY = 128;direction_pressed = true;");
             this.lookupTable.Add("L100", "ReportData->LX = 0;ReportData->LY = 128;direction_pressed = true;");
             this.lookupTable.Add("SODC_L100", "if(direction_pressed) { ReportData->LX = 128; ReportData->LY = 128; } else { ReportData->LX = 0;ReportData->LY = 128;direction_pressed = true;}");
+            this.lookupTable.Add("SOCD_U100", "if(last_dir != -1){ReportData->LY = 0;}else{ReportData->LX = 128;ReportData->LY = 0;}");
+            this.lookupTable.Add("SOCD_D100", "if(last_dir != -1){ReportData->LY = 255;}else{ReportData->LX = 128;ReportData->LY = 255;}");
+            this.lookupTable.Add("SOCD_D100_multi", "if(last_dir != -1){if(last_dir > 128) {ReportData->LX = 180;} else {ReportData->LX = 90;} ReportData->LY = 240;}else{ReportData->LX = 128;ReportData->LY = 255;}");
             this.lookupTable.Add("U100", "if(direction_pressed){ReportData->LY = 0;}else{ReportData->LX = 128;ReportData->LY = 0;}");
             this.lookupTable.Add("D100", "if(direction_pressed){ReportData->LY = 255;}else{ReportData->LX = 128;ReportData->LY = 255;}");
+            this.lookupTable.Add("D100_multi", "if(direction_pressed){if(ReportData->LX > 128) {ReportData->LX = 180; } else {ReportData->LX = 90;} ReportData->LY = 240;}else{ReportData->LX = 128;ReportData->LY = 255;}");
             this.lookupTable.Add("MIRROR", "mirror_pressed = true;");
             this.lookupTable.Add("HALF", "if(direction_pressed) {if(ReportData->LX == 0) {ReportData->LX = 60;} else {ReportData->LX = 196;}}if(ReportData->LY == 255) {ReportData->LY = 192;} else if(ReportData->LY == 0) {ReportData->LY = 60;}");
             this.lookupTable.Add("SOCD_HALF", "if(last_dir != -1) {  if(ReportData->LX == 0) {    ReportData->LX = 60;  } else {    ReportData->LX = 196;  }}if(ReportData->LY == 255) {  ReportData->LY = 192;} else if(ReportData->LY == 0) {  ReportData->LY = 60;}");
@@ -234,7 +271,7 @@ namespace LayoutDesigner
             this.lookupTable.Add("MELEE_L100", "ReportData->LX = 0; ReportData->LY = 128;direction_pressed = true;");
             this.lookupTable.Add("MELEE_U100", "if(direction_pressed){ReportData->LY = 48;}else{ReportData->LX = 128;ReportData->LY = 48;}");
             this.lookupTable.Add("MELEE_D100", "if(direction_pressed){ReportData->LY = 208;}else{ReportData->LX = 128;ReportData->LY = 208;}");
-            this.lookupTable.Add("MELEE_HALF", "if(direction_pressed) {if(ReportData->LX == 0) {ReportData->LX = 70;} else {ReportData->LX = 130;}}if(ReportData->LY > 128) {ReportData->LY = 150;} else if(ReportData->LY < 128) {ReportData->LY = 76;}");
+            this.lookupTable.Add("MELEE_HALF", "if(direction_pressed) {if(ReportData->LX == 0) {ReportData->LX = 75;} else {ReportData->LX = 170;}}if(ReportData->LY > 128) {ReportData->LY = 170;} else if(ReportData->LY < 128) {ReportData->LY = 76;}");
             // firefox angle things
             this.lookupTable.Add("STEEP_TILT", "if(ReportData->LX > 128) {    if(ReportData->LY > 128) {        ReportData->LX = 230;    } else if(ReportData->LY < 128) {        ReportData->LX = 230;        ReportData->LY = 75;    }} else if(ReportData->LX < 128) {    if(ReportData->LY < 128) {        ReportData->LY = 75;    }}");
         }
